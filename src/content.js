@@ -93,6 +93,35 @@
     if (TRANSLATOR_MESSAGES[state.status]) showBadge(`Dual Subtitles: ${TRANSLATOR_MESSAGES[state.status]}`, { fade: true });
   });
 
+  // --- Word popup -----------------------------------------------------------
+
+  async function onWordClick(word, element) {
+    overlay.video?.pause(); // give the learner time to read
+
+    const german = document.createElement('div');
+    german.className = 'ds-popup-de';
+    german.textContent = word;
+    const english = document.createElement('div');
+    english.className = 'ds-popup-en';
+    const content = document.createElement('div');
+    content.append(german, english);
+
+    const { status } = DS.translator.state;
+    if (status !== 'ready') {
+      english.textContent = status === 'downloading' || status === 'needsDownload' || status === 'checking'
+        ? 'Enable the translation first (button under the subtitle).'
+        : TRANSLATOR_MESSAGES[status];
+      overlay.showPopup(element, content);
+      return;
+    }
+
+    english.textContent = DS.translator.cached(word) ?? '…';
+    overlay.showPopup(element, content);
+    const result = await DS.translator.translate(word);
+    english.textContent = result ?? '(translation failed)';
+    overlay?.positionPopup();
+  }
+
   // --- Lifecycle -------------------------------------------------------------
 
   function stop() {
@@ -122,6 +151,7 @@
     console.table(result.lines);
     overlay = new DS.Overlay(getPlayer(), result.lines);
     overlay.getEnglish = englishFor;
+    overlay.onWordClick = onWordClick;
     overlay.render();
     if (DS.translator.state.status === 'ready') translateAhead(result.lines, mySession);
     else DS.translator.init();

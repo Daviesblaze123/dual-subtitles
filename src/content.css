@@ -88,3 +88,35 @@ html.ds-active .ytp-caption-window-container {
   font-size: 0.75em;
   cursor: pointer;
 }
+
+.ds-word {
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.ds-word:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ds-popup {
+  position: absolute;
+  z-index: 61;
+  min-width: 120px;
+  max-width: 320px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  font: 14px/1.4 Roboto, Arial, sans-serif;
+  pointer-events: auto;
+}
+
+.ds-popup-de {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.ds-popup-en {
+  color: #444;
+}
