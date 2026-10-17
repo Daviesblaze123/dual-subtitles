@@ -39,6 +39,62 @@
     badge = null;
   }
 
+  // --- English line --------------------------------------------------------
+
+  const TRANSLATOR_MESSAGES = {
+    unsupported: 'English translation needs desktop Chrome 138 or newer – this browser has no built-in translator.',
+    unavailable: 'Chrome cannot translate German → English on this device.',
+    error: 'The translator could not start. Reload the page to try again.',
+  };
+
+  function englishFor(line) {
+    const { status, progress, stalled } = DS.translator.state;
+    if (status === 'ready') {
+      const english = DS.translator.cached(line.text);
+      if (english === null) return '(translation failed)';
+      return english ?? '…';
+    }
+    if (status === 'needsDownload') {
+      const button = document.createElement('button');
+      button.className = 'ds-download';
+      button.textContent = 'Click to enable English translation (one-time download)';
+      button.addEventListener('click', () => DS.translator.download());
+      return button;
+    }
+    if (status === 'downloading') {
+      if (stalled) return 'The translation download has not started yet. Check your internet connection, or see the README.';
+      return `Downloading the translation model… ${Math.round(progress * 100)}%`;
+    }
+    if (status === 'checking') return '…';
+    const note = document.createElement('span');
+    note.className = 'ds-note';
+    note.textContent = TRANSLATOR_MESSAGES[status];
+    return note;
+  }
+
+  // Translate lines ahead of time, starting from the current position, so the
+  // English is ready before each line is spoken.
+  async function translateAhead(lines, mySession) {
+    const pending = new Set(lines.map((line) => line.text));
+    while (mySession === session && overlay && pending.size) {
+      if (DS.translator.state.status !== 'ready') return;
+      const from = overlay.upcomingIndex;
+      const next = lines.slice(from).find((l) => pending.has(l.text)) || lines.find((l) => pending.has(l.text));
+      pending.delete(next.text);
+      await DS.translator.translate(next.text);
+      if (mySession === session && overlay?.currentLine?.text === next.text) overlay.render();
+    }
+  }
+
+  DS.translator.onChange((state) => {
+    if (!overlay) return;
+    overlay.render();
+    if (state.status === 'ready') translateAhead(overlay.lines, session);
+    if (TRANSLATOR_MESSAGES[state.status]) showBadge(`Dual Subtitles: ${TRANSLATOR_MESSAGES[state.status]}`, { fade: true });
+  });
+
+  // --- Lifecycle -------------------------------------------------------------
+
   function stop() {
     session++;
     overlay?.destroy();
@@ -65,6 +121,10 @@
     console.log(`[Dual Subtitles] ${result.lines.length} German lines (${kind}):`);
     console.table(result.lines);
     overlay = new DS.Overlay(getPlayer(), result.lines);
+    overlay.getEnglish = englishFor;
+    overlay.render();
+    if (DS.translator.state.status === 'ready') translateAhead(result.lines, mySession);
+    else DS.translator.init();
   }
 
   let lastVideoId = null;

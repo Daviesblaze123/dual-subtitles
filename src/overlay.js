@@ -19,9 +19,21 @@
       this.box.className = 'ds-box';
       this.de = document.createElement('div');
       this.de.className = 'ds-de';
-      this.box.append(this.de);
+      this.en = document.createElement('div');
+      this.en.className = 'ds-en';
+      this.box.append(this.de, this.en);
+
+      // Set by the content script: returns the English for a line, as text or
+      // as a DOM node (for status messages and buttons).
+      this.getEnglish = () => '';
       this.root.append(this.box);
       player.append(this.root);
+
+      // Keep clicks on the subtitles from reaching the player (play/pause,
+      // double-click fullscreen).
+      for (const type of ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup']) {
+        this.box.addEventListener(type, (e) => e.stopPropagation());
+      }
 
       // Hide YouTube's own captions while ours are shown.
       document.documentElement.classList.add('ds-active');
@@ -67,10 +79,20 @@
       return this.lines[this.index] || null;
     }
 
+    // Index of the line on screen, or else the next one to come.
+    get upcomingIndex() {
+      const t = this.video?.currentTime || 0;
+      const i = this.lines.findIndex((line) => line.end > t);
+      return i === -1 ? this.lines.length : i;
+    }
+
     render() {
       const line = this.currentLine;
       this.box.hidden = !line;
       this.de.textContent = line ? line.text : '';
+      const english = line ? this.getEnglish(line) : '';
+      if (english instanceof Node) this.en.replaceChildren(english);
+      else this.en.textContent = english;
     }
 
     destroy() {
