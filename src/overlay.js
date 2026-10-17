@@ -161,15 +161,30 @@
       this.positionPopup();
     }
 
+    // Display settings from the popup: { fontSize, position, showEnglish }.
+    applySettings(settings) {
+      this.root.dataset.size = settings.fontSize;
+      this.root.dataset.position = settings.position;
+      this.closePopup();
+    }
+
     positionPopup() {
       if (!this.popup) return;
       const root = this.root.getBoundingClientRect();
+      const player = this.player.getBoundingClientRect();
       const word = this.popupAnchor.getBoundingClientRect();
       const width = this.popup.offsetWidth;
       const center = word.left + word.width / 2 - root.left;
       const left = Math.min(Math.max(center - width / 2, 8), root.width - width - 8);
       this.popup.style.left = `${left}px`;
-      this.popup.style.bottom = `${root.bottom - word.top + 10}px`;
+      // Above the word, or below it if there is no room (subtitles at the top).
+      if (word.top - player.top > this.popup.offsetHeight + 20) {
+        this.popup.style.top = '';
+        this.popup.style.bottom = `${root.bottom - word.top + 10}px`;
+      } else {
+        this.popup.style.bottom = '';
+        this.popup.style.top = `${word.bottom - root.top + 10}px`;
+      }
     }
 
     closePopup() {

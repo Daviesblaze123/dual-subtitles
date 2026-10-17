@@ -12,6 +12,7 @@
   let overlay = null;
   let videoTitle = '';
   let savedKeys = new Set(); // DS.vocab keys of everything saved so far
+  let settings = DS.settings.DEFAULTS;
   let lastVideoId = null;
   let enabled = false; // read from storage at startup
   let session = 0; // bumps on every navigation so stale async work is ignored
@@ -203,6 +204,7 @@
     overlay.onWordClick = onWordClick;
     overlay.onSave = saveSentence;
     overlay.isSaved = isSaved;
+    overlay.applySettings(settings);
     videoTitle = result.title;
     overlay.render();
     if (DS.translator.state.status === 'ready') translateAhead(result.lines, mySession);
@@ -226,6 +228,16 @@
     if (area !== 'local' || !changes.enabled) return;
     enabled = changes.enabled.newValue !== false;
     onPageChange();
+  });
+
+  // Display settings from the popup apply immediately.
+  DS.settings.load().then((s) => {
+    settings = s;
+    overlay?.applySettings(settings);
+  });
+  DS.settings.onChange((s) => {
+    settings = s;
+    overlay?.applySettings(settings);
   });
 
   // YouTube is a single-page app: listen for its own navigation event.
