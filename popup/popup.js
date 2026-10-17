@@ -73,11 +73,26 @@
   }
 
   function renderList(items) {
+    $('export').disabled = items.length === 0;
     $('count').textContent = items.length ? `(${items.length})` : '';
     $('empty').hidden = items.length > 0;
     $('list').replaceChildren(...items.map(renderItem));
   }
 
+  // --- CSV export --------------------------------------------------------------
+
+  async function exportCsv() {
+    const items = await DS.vocab.list();
+    const blob = new Blob([DS.toCsv(items)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `german-vocab-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  $('export').addEventListener('click', exportCsv);
   initToggle();
   DS.vocab.list().then(renderList);
   DS.vocab.onChange(renderList);
