@@ -7,6 +7,8 @@
 
   const DS = self.DualSubs;
   let badge = null;
+  let badgeTimer = null;
+  let overlay = null;
   let session = 0; // bumps on every navigation so stale async work is ignored
 
   function currentVideoId() {
@@ -14,20 +16,34 @@
     return new URLSearchParams(location.search).get('v');
   }
 
-  function showBadge(text) {
-    const player = document.getElementById('movie_player');
+  const getPlayer = () => document.getElementById('movie_player');
+
+  // Small status label in the top-left corner of the player.
+  function showBadge(text, { fade = false } = {}) {
+    const player = getPlayer();
     if (!player) return;
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'ds-badge';
     }
     badge.textContent = text;
+    badge.classList.remove('ds-faded');
     if (badge.parentElement !== player) player.appendChild(badge);
+    clearTimeout(badgeTimer);
+    if (fade) badgeTimer = setTimeout(() => badge?.classList.add('ds-faded'), 4000);
   }
 
   function removeBadge() {
+    clearTimeout(badgeTimer);
     badge?.remove();
     badge = null;
+  }
+
+  function stop() {
+    session++;
+    overlay?.destroy();
+    overlay = null;
+    removeBadge();
   }
 
   async function start(videoId) {
@@ -45,9 +61,10 @@
       return;
     }
     const kind = result.track.kind === 'asr' ? 'auto-generated' : 'manual';
-    showBadge(`Dual Subtitles: ${result.lines.length} German lines loaded (${kind})`);
+    showBadge(`Dual Subtitles: ${result.lines.length} German lines loaded (${kind})`, { fade: true });
     console.log(`[Dual Subtitles] ${result.lines.length} German lines (${kind}):`);
     console.table(result.lines);
+    overlay = new DS.Overlay(getPlayer(), result.lines);
   }
 
   let lastVideoId = null;
@@ -55,8 +72,7 @@
     const videoId = currentVideoId();
     if (videoId === lastVideoId) return;
     lastVideoId = videoId;
-    session++;
-    removeBadge();
+    stop();
     if (videoId) start(videoId);
   }
 
