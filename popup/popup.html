@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dual Subtitles</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Dual Subtitles <span class="langs">DE · EN</span></h1>
+    <label class="switch" title="Show German + English subtitles on YouTube">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </header>
+  <p class="status" id="status"></p>
+
+  <section>
+    <div class="list-head">
+      <h2>Vocab list <span id="count"></span></h2>
+    </div>
+    <p class="empty" id="empty" hidden>
+      Nothing saved yet. On YouTube, click ☆ on a subtitle (or press Alt+S) to save a sentence,
+      or click a German word and choose “Save word”.
+    </p>
+    <ul id="list"></ul>
+  </section>
+
+  <script src="../src/vocab.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

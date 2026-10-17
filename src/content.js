@@ -12,6 +12,7 @@
   let videoTitle = '';
   let savedKeys = new Set(); // DS.vocab keys of everything saved so far
   let lastVideoId = null;
+  let enabled = false; // read from storage at startup
   let session = 0; // bumps on every navigation so stale async work is ignored
 
   function currentVideoId() {
@@ -166,7 +167,7 @@
   DS.vocab.onChange(updateSavedKeys);
 
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg.type === 'saveSentence') saveSentence();
+    if (msg.type === 'saveSentence' && enabled) saveSentence();
   });
 
   // --- Lifecycle -------------------------------------------------------------
@@ -208,14 +209,24 @@
   }
 
   function onPageChange() {
-    const videoId = currentVideoId();
+    const videoId = enabled ? currentVideoId() : null;
     if (videoId === lastVideoId) return;
     lastVideoId = videoId;
     stop();
     if (videoId) start(videoId);
   }
 
+  // On/off toggle from the extension popup.
+  chrome.storage.local.get('enabled').then((data) => {
+    enabled = data.enabled !== false;
+    onPageChange();
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.enabled) return;
+    enabled = changes.enabled.newValue !== false;
+    onPageChange();
+  });
+
   // YouTube is a single-page app: listen for its own navigation event.
   document.addEventListener('yt-navigate-finish', onPageChange);
-  onPageChange();
 })();
