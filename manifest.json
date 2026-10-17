@@ -3,17 +3,45 @@
   "name": "Dual Subtitles (DE/EN)",
   "version": "0.1.0",
   "description": "German subtitles with English translations underneath on YouTube, plus a vocabulary list.",
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "commands": {
+    "save-sentence": {
+      "suggested_key": {
+        "default": "Alt+S"
+      },
+      "description": "Save the current subtitle sentence to the vocab list"
+    }
+  },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["src/inject.js"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "src/inject.js"
+      ],
       "world": "MAIN",
       "run_at": "document_start"
     },
     {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["src/captions.js", "src/translator.js", "src/overlay.js", "src/content.js"],
-      "css": ["src/content.css"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "src/vocab.js",
+        "src/captions.js",
+        "src/translator.js",
+        "src/overlay.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
       "run_at": "document_idle"
     }
   ]

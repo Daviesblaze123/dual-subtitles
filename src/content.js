@@ -9,6 +9,9 @@
   let badge = null;
   let badgeTimer = null;
   let overlay = null;
+  let videoTitle = '';
+  let savedKeys = new Set(); // DS.vocab keys of everything saved so far
+  let lastVideoId = null;
   let session = 0; // bumps on every navigation so stale async work is ignored
 
   function currentVideoId() {
@@ -97,30 +100,74 @@
 
   async function onWordClick(word, element) {
     overlay.video?.pause(); // give the learner time to read
+    const line = overlay.currentLine;
+    const ready = DS.translator.state.status === 'ready';
 
     const german = document.createElement('div');
     german.className = 'ds-popup-de';
     german.textContent = word;
     const english = document.createElement('div');
     english.className = 'ds-popup-en';
+    if (ready) english.textContent = DS.translator.cached(word) ?? '…';
+    else english.textContent = TRANSLATOR_MESSAGES[DS.translator.state.status] || 'Enable the translation first (button under the subtitle).';
+
+    const save = document.createElement('button');
+    save.className = 'ds-popup-save';
+    const showSaved = () => {
+      const saved = savedKeys.has(DS.vocab.keyOf('word', word));
+      save.textContent = saved ? '★ Saved' : '☆ Save word';
+      save.disabled = saved;
+    };
+    showSaved();
+    save.addEventListener('click', async () => {
+      const translation = ready ? await DS.translator.translate(word) : null;
+      await saveItem({ type: 'word', german: word, english: translation || '', context: line?.text || '', time: line?.start });
+      showSaved();
+    });
+
     const content = document.createElement('div');
-    content.append(german, english);
-
-    const { status } = DS.translator.state;
-    if (status !== 'ready') {
-      english.textContent = status === 'downloading' || status === 'needsDownload' || status === 'checking'
-        ? 'Enable the translation first (button under the subtitle).'
-        : TRANSLATOR_MESSAGES[status];
-      overlay.showPopup(element, content);
-      return;
-    }
-
-    english.textContent = DS.translator.cached(word) ?? '…';
+    content.append(german, english, save);
     overlay.showPopup(element, content);
-    const result = await DS.translator.translate(word);
-    english.textContent = result ?? '(translation failed)';
-    overlay?.positionPopup();
+
+    if (ready) {
+      const result = await DS.translator.translate(word);
+      english.textContent = result ?? '(translation failed)';
+      overlay?.positionPopup();
+    }
   }
+
+  // --- Saving ----------------------------------------------------------------
+
+  async function saveItem(item) {
+    const added = await DS.vocab.add({ ...item, videoId: lastVideoId, videoTitle, time: Math.floor(item.time || 0) });
+    savedKeys.add(DS.vocab.keyOf(item.type, item.german));
+    overlay?.render();
+    showBadge(added ? `Saved: ${item.german}` : `Already in your vocab list: ${item.german}`, { fade: true });
+  }
+
+  async function saveSentence() {
+    const line = overlay?.lastLine;
+    if (!line) return showBadge('Dual Subtitles: no subtitle to save yet.', { fade: true });
+    let english = DS.translator.cached(line.text);
+    if (english === undefined && DS.translator.state.status === 'ready') english = await DS.translator.translate(line.text);
+    await saveItem({ type: 'sentence', german: line.text, english: english || '', time: line.start });
+  }
+
+  function isSaved(line) {
+    return savedKeys.has(DS.vocab.keyOf('sentence', line.text));
+  }
+
+  function updateSavedKeys(items) {
+    savedKeys = new Set(items.map((it) => DS.vocab.keyOf(it.type, it.german)));
+    overlay?.render();
+  }
+
+  DS.vocab.list().then(updateSavedKeys);
+  DS.vocab.onChange(updateSavedKeys);
+
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === 'saveSentence') saveSentence();
+  });
 
   // --- Lifecycle -------------------------------------------------------------
 
@@ -152,12 +199,14 @@
     overlay = new DS.Overlay(getPlayer(), result.lines);
     overlay.getEnglish = englishFor;
     overlay.onWordClick = onWordClick;
+    overlay.onSave = saveSentence;
+    overlay.isSaved = isSaved;
+    videoTitle = result.title;
     overlay.render();
     if (DS.translator.state.status === 'ready') translateAhead(result.lines, mySession);
     else DS.translator.init();
   }
 
-  let lastVideoId = null;
   function onPageChange() {
     const videoId = currentVideoId();
     if (videoId === lastVideoId) return;

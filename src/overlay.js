@@ -35,13 +35,20 @@
       this.de.className = 'ds-de';
       this.en = document.createElement('div');
       this.en.className = 'ds-en';
-      this.box.append(this.de, this.en);
+      this.save = document.createElement('button');
+      this.save.className = 'ds-save';
+      this.save.title = 'Save sentence to vocab list (Alt+S)';
+      this.box.append(this.de, this.en, this.save);
 
       // Set by the content script: returns the English for a line, as text or
       // as a DOM node (for status messages and buttons).
       this.getEnglish = () => '';
       // Set by the content script: called with (word, element) on a word click.
       this.onWordClick = () => {};
+      // Set by the content script: save button handler and "already saved" check.
+      this.onSave = () => {};
+      this.isSaved = () => false;
+      this.save.addEventListener('click', () => this.onSave());
       this.popup = null;
 
       this.box.addEventListener('click', (e) => {
@@ -113,6 +120,12 @@
       return this.lines[this.index] || null;
     }
 
+    // The line on screen, or else the one shown most recently.
+    get lastLine() {
+      const t = this.video?.currentTime || 0;
+      return this.currentLine || this.lines.findLast((line) => line.start <= t) || null;
+    }
+
     // Index of the line on screen, or else the next one to come.
     get upcomingIndex() {
       const t = this.video?.currentTime || 0;
@@ -128,6 +141,9 @@
         if (this.popup) this.closePopup();
       }
       this.box.hidden = !line;
+      const saved = !!line && this.isSaved(line);
+      this.save.textContent = saved ? '★' : '☆';
+      this.save.classList.toggle('ds-saved', saved);
       const english = line ? this.getEnglish(line) : '';
       if (english instanceof Node) this.en.replaceChildren(english);
       else this.en.textContent = english;
