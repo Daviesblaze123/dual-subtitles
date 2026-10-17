@@ -1,6 +1,7 @@
 // Dual Subtitles – content script (runs on youtube.com).
 // Ties the pieces together: detects the current video, loads its German
-// captions and shows status messages.
+// captions, shows the overlay with translations, and handles saving and the
+// on/off toggle.
 
 (() => {
   'use strict';

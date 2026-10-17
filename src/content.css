@@ -168,3 +168,8 @@ html.ds-active .ytp-caption-window-container {
   color: #9a7400;
   cursor: default;
 }
+
+/* During ads the video time belongs to the ad, so hide the subtitles. */
+.ad-showing .ds-overlay {
+  display: none;
+}

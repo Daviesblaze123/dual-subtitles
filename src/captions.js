@@ -42,13 +42,18 @@
     });
   }
 
+  // Send a request to the page script and wait for the reply of type `replyType`.
+  function ask(type, replyType, timeoutMs = 1000) {
+    const requestId = Math.random().toString(36).slice(2);
+    const reply = waitFor((m) => m.type === replyType && m.requestId === requestId, timeoutMs);
+    toPage({ type, requestId });
+    return reply;
+  }
+
   async function getTracks(videoId) {
     // Right after navigating, the player may still report the previous video.
     for (let i = 0; i < 20; i++) {
-      const requestId = Math.random().toString(36).slice(2);
-      const reply = waitFor((m) => m.type === 'tracks' && m.requestId === requestId, 1000);
-      toPage({ type: 'getTracks', requestId });
-      const info = await reply;
+      const info = await ask('getTracks', 'tracks');
       if (info?.videoId === videoId) return info;
       await sleep(500);
     }
@@ -83,6 +88,7 @@
   }
 
   async function downloadTrack(videoId, track) {
+    await ask('replayCaptions', 'replayDone');
     const already = captured.findLast((c) => isFileFor(c.url, videoId, track));
     if (already) return already.text;
 

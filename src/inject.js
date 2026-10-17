@@ -18,8 +18,16 @@
     return typeof url === 'string' && url.includes('/api/timedtext');
   }
 
+  // Kept so they can be replayed: the player may download captions before the
+  // content script is listening (e.g. when German subtitles are already on).
+  const captured = [];
+
   function reportCaption(url, text) {
-    if (text) post({ type: 'captionData', url: new URL(url, location.href).href, text });
+    if (!text) return;
+    const capture = { url: new URL(url, location.href).href, text };
+    captured.push(capture);
+    if (captured.length > 20) captured.shift();
+    post({ type: 'captionData', ...capture });
   }
 
   const xhrOpen = XMLHttpRequest.prototype.open;
@@ -91,5 +99,9 @@
     if (event.source !== window || msg?.source !== SOURCE || msg.from !== 'content') return;
     if (msg.type === 'getTracks') post({ type: 'tracks', requestId: msg.requestId, ...getTracks() });
     if (msg.type === 'enableTrack') enableTrack(msg.track);
+    if (msg.type === 'replayCaptions') {
+      captured.forEach((capture) => post({ type: 'captionData', ...capture }));
+      post({ type: 'replayDone', requestId: msg.requestId });
+    }
   });
 })();
