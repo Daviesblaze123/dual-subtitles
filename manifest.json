@@ -50,6 +50,7 @@
       ],
       "js": [
         "src/vocab.js",
+        "src/settings.js",
         "src/captions.js",
         "src/translator.js",
         "src/overlay.js",

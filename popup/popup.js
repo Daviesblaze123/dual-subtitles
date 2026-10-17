@@ -24,6 +24,21 @@
       : 'Off – YouTube looks and works as normal.';
   }
 
+  // --- Display settings ------------------------------------------------------
+
+  async function initSettings() {
+    const settings = await DS.settings.load();
+    for (const group of document.querySelectorAll('.segmented')) {
+      const name = group.dataset.setting;
+      for (const input of group.querySelectorAll('input')) {
+        input.checked = input.value === settings[name];
+        input.addEventListener('change', () => DS.settings.save({ [name]: input.value }));
+      }
+    }
+    $('showEnglish').checked = settings.showEnglish;
+    $('showEnglish').addEventListener('change', () => DS.settings.save({ showEnglish: $('showEnglish').checked }));
+  }
+
   // --- Vocab list ------------------------------------------------------------
 
   function videoLink(item) {
@@ -94,6 +109,7 @@
 
   $('export').addEventListener('click', exportCsv);
   initToggle();
+  initSettings();
   DS.vocab.list().then(renderList);
   DS.vocab.onChange(renderList);
 })();

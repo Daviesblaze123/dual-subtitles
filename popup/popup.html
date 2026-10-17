@@ -15,6 +15,31 @@
   </header>
   <p class="status" id="status"></p>
 
+  <section class="settings">
+    <h2>Display</h2>
+    <div class="setting">
+      <span class="label">Font size</span>
+      <div class="segmented" data-setting="fontSize">
+        <label><input type="radio" name="fontSize" value="S"><span>S</span></label>
+        <label><input type="radio" name="fontSize" value="M"><span>M</span></label>
+        <label><input type="radio" name="fontSize" value="L"><span>L</span></label>
+        <label><input type="radio" name="fontSize" value="XL"><span>XL</span></label>
+      </div>
+    </div>
+    <div class="setting">
+      <span class="label">Position</span>
+      <div class="segmented" data-setting="position">
+        <label><input type="radio" name="position" value="bottom"><span>Bottom</span></label>
+        <label><input type="radio" name="position" value="higher"><span>Higher</span></label>
+        <label><input type="radio" name="position" value="top"><span>Top</span></label>
+      </div>
+    </div>
+    <label class="setting checkbox">
+      <span class="label">Show English translation</span>
+      <input type="checkbox" id="showEnglish">
+    </label>
+  </section>
+
   <section>
     <div class="list-head">
       <h2>Vocab list <span id="count"></span></h2>
@@ -28,6 +53,7 @@
   </section>
 
   <script src="../src/vocab.js"></script>
+  <script src="../src/settings.js"></script>
   <script src="csv.js"></script>
   <script src="popup.js"></script>
 </body>
