@@ -183,6 +183,10 @@ html.ds-active .ytp-caption-window-container {
   bottom: auto;
 }
 
+.ds-overlay[data-english="off"] .ds-en:not(.ds-status) {
+  display: none;
+}
+
 /* With subtitles at the top, move status messages to the bottom. */
 .html5-video-player:has(.ds-overlay[data-position="top"]) .ds-badge {
   top: auto;

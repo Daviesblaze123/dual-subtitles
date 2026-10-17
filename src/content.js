@@ -68,8 +68,11 @@
       return button;
     }
     if (status === 'downloading') {
-      if (stalled) return 'The translation download has not started yet. Check your internet connection, or see the README.';
-      return `Downloading the translation model… ${Math.round(progress * 100)}%`;
+      const message = document.createElement('span');
+      message.textContent = stalled
+        ? 'The translation download has not started yet. Check your internet connection, or see the README.'
+        : `Downloading the translation model… ${Math.round(progress * 100)}%`;
+      return message;
     }
     if (status === 'checking') return '…';
     const note = document.createElement('span');

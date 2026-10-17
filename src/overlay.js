@@ -145,7 +145,10 @@
       this.save.textContent = saved ? '★' : '☆';
       this.save.classList.toggle('ds-saved', saved);
       const english = line ? this.getEnglish(line) : '';
-      if (english instanceof Node) this.en.replaceChildren(english);
+      // Nodes are status messages/buttons; they stay visible even with English hidden.
+      const isStatus = english instanceof Node;
+      this.en.classList.toggle('ds-status', isStatus);
+      if (isStatus) this.en.replaceChildren(english);
       else this.en.textContent = english;
     }
 
@@ -165,6 +168,7 @@
     applySettings(settings) {
       this.root.dataset.size = settings.fontSize;
       this.root.dataset.position = settings.position;
+      this.root.dataset.english = settings.showEnglish ? 'on' : 'off';
       this.closePopup();
     }
 

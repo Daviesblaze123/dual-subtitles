@@ -43,6 +43,10 @@ reload button on the extension's card in `chrome://extensions`.
    `chrome://extensions/shortcuts`.
 5. Click the extension icon to switch the subtitles **on/off**, see your vocab
    list, delete items, and **Export CSV**.
+6. Under **Display** in the same menu: choose the **font size** (S–XL), the
+   **position** (bottom, higher or top) and whether to **show the English**
+   line. Hiding English is a good way to test yourself; clicking a word still
+   shows its translation. Changes apply immediately.
 
 ## Using the CSV file
 
@@ -82,6 +86,7 @@ src/captions.js      Finds the German track and turns it into timed lines
 src/translator.js    Chrome's on-device Translator (German → English) + cache
 src/overlay.js       Draws the subtitles and word popup on the video
 src/vocab.js         Vocab list storage (shared with the popup)
+src/settings.js      Display settings storage (shared with the popup)
 src/content.js       Connects everything on the YouTube page
 src/content.css      Styles for the overlay
 src/background.js    Forwards the Alt+S shortcut to the YouTube tab
