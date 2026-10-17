@@ -88,12 +88,15 @@
   }
 
   async function downloadTrack(videoId, track) {
+    const fromPlayer = () => captured.findLast((c) => isFileFor(c.url, videoId, track))?.text;
+
     await ask('replayCaptions', 'replayDone');
-    const already = captured.findLast((c) => isFileFor(c.url, videoId, track));
-    if (already) return already.text;
+    if (fromPlayer()) return fromPlayer();
 
     const direct = await fetchDirect(track);
     if (direct.trim()) return direct;
+    // The player may have delivered the file while we were fetching.
+    if (fromPlayer()) return fromPlayer();
 
     const reply = waitFor((m) => m.type === 'captionData' && isFileFor(m.url, videoId, track), 15000);
     toPage({ type: 'enableTrack', track: { languageCode: track.languageCode, kind: track.kind } });
